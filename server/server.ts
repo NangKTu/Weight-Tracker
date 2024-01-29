@@ -33,6 +33,24 @@ app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello, World!' });
 });
 
+app.post('/api/sign-in', async (req, res, next) => {
+  const { username, password } = req.body;
+
+  try {
+    const result = await db.query(
+      'SELECT * FROM users WHERE "userName" = $1 AND "password" = $2',
+      [username, password]
+    );
+    if (result.rows.length > 0) {
+      res.status(200).json({ success: true, message: 'Sign in successful' });
+    } else {
+      throw new ClientError(401, 'Invalid login');
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 /*
  * Middleware that handles paths that aren't handled by static middleware
  * or API route handlers.
