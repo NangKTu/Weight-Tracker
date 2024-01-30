@@ -11,7 +11,7 @@ const Header2 = () => {
     <Navbar bg="dark" variant="dark" expand="lg">
       <Container>
         <Navbar.Brand>Weight Tracker</Navbar.Brand>
-        <Form inline>
+        <Form>
           <Row>
             <Col xs="auto">
               <Button type="button" onClick={handleLogout}>
