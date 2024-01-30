@@ -9,7 +9,7 @@ function Cal() {
   const [value, onChange] = useState<Value>(new Date());
 
   return (
-    <div className="justisfy-content-center">
+    <div className="justify-content-center d-flex">
       <Calendar onChange={onChange} value={value} />
     </div>
   );

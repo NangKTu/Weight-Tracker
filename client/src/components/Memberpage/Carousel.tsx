@@ -11,7 +11,7 @@ function CarouselFade() {
       <Carousel.Item>
         <WeightModal />
       </Carousel.Item>
-      <Carousel.Item className="align-items-center">
+      <Carousel.Item>
         <Calendar />
       </Carousel.Item>
       <Carousel.Item className="text-center">
