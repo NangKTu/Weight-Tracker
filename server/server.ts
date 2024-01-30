@@ -33,6 +33,19 @@ app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello, World!' });
 });
 
+app.get('/api/users', async (req, res, next) => {
+  try {
+    // throw new Error();
+    const sql = `
+      select * from "users";
+    `;
+    const result = await db.query(sql);
+    res.json(result.rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.post('/api/sign-in', async (req, res, next) => {
   const { username, password } = req.body;
 
