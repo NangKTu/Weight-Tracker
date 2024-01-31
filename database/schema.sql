@@ -15,10 +15,9 @@ CREATE TABLE "users" (
 
 CREATE TABLE "weights" (
   "weightId" serial PRIMARY KEY,
-  "userId" integer UNIQUE,
+  "userId" integer,
   "weight" integer,
-  "weightType" varchar,
-  "created_at" timestamptz(6) not null default now()
+  "created_at" varchar
 );
 
 ALTER TABLE "weights" ADD FOREIGN KEY ("userId") REFERENCES "users" ("userId");
