@@ -14,6 +14,6 @@ insert into "users" ("userName", "password")
 values ('tester1', 'test123');
 
 insert into "weights" ("userId", "weight", "created_at")
-values (1, 160, '1/29'),
-        (1, 160, '1/30'),
-        (1, 160, '1/31');
+values (1, 160, '1/29/2024'),
+        (1, 160, '1/30/2024'),
+        (1, 159, '1/31/2024');
