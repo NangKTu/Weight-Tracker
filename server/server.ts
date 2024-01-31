@@ -33,16 +33,23 @@ app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello, World!' });
 });
 
-app.get('/api/users', async (req, res, next) => {
+app.get('/api/user-weights/:userId', async (req, res, next) => {
+  const userId = req.params.userId;
+
   try {
-    // throw new Error();
-    const sql = `
-      select * from "users";
-    `;
-    const result = await db.query(sql);
-    res.json(result.rows);
-  } catch (err) {
-    next(err);
+    const result = await db.query(
+      'SELECT "weight", "created_at" FROM "weights" WHERE "userId" = $1',
+      [userId]
+    );
+
+    const weightsData = result.rows.map((row) => ({
+      weight: row.weight,
+      created_at: row.created_at,
+    }));
+
+    res.status(200).json(weightsData);
+  } catch (error) {
+    next(error);
   }
 });
 
