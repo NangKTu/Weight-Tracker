@@ -1,13 +1,37 @@
 import { useState } from 'react';
 import { Button, Form, InputGroup, Modal } from 'react-bootstrap';
+import { useCheckinContext } from './CheckinContext';
 
 function WeightModal() {
   const [weight, setWeight] = useState('');
   const [showModal, setShowModal] = useState(true);
+  const { triggerRefresh } = useCheckinContext();
 
-  const handleSaveChanges = () => {
-    // Save the weight and show the WeightedModal
-    setShowModal(false);
+  const handleSaveChanges = async () => {
+    try {
+      const token = sessionStorage.getItem('token');
+      if (!token) {
+        console.error('Token not found in sessionStorage.');
+        return;
+      }
+      const response = await fetch('/api/user-weight', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ weight }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message);
+      }
+      triggerRefresh();
+      setShowModal(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -16,7 +40,7 @@ function WeightModal() {
       style={{ display: 'block', position: 'initial' }}>
       {showModal ? (
         <Modal.Dialog>
-          <Modal.Header closeButton>
+          <Modal.Header>
             <Modal.Title>Please Enter Your Weight</Modal.Title>
           </Modal.Header>
 
@@ -51,7 +75,7 @@ function WeightedModal({ weight }) {
       className="modal show"
       style={{ display: 'block', position: 'initial' }}>
       <Modal.Dialog>
-        <Modal.Header closeButton>
+        <Modal.Header>
           <Modal.Title>Your weight is</Modal.Title>
         </Modal.Header>
 

@@ -1,45 +1,70 @@
-import { useState } from "react";
-import { Button, Form, FormGroup, FormControl } from "react-bootstrap";
+import { FormEvent, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button, Form, FormGroup, FormControl } from 'react-bootstrap';
 
-const Register = ({ onToggle }) => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+type Props = {
+  onToggle: () => void;
+};
 
-  const handleSubmit = (event) => {
+function RegistrationForm({ onToggle }: Props) {
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-  };
+    try {
+      setIsLoading(true);
+      const formData = new FormData(event.currentTarget);
+      const userData = Object.fromEntries(formData.entries());
+      const req = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      };
+      const res = await fetch('/api/auth/sign-up', req);
+      if (!res.ok) {
+        throw new Error(`fetch Error ${res.status}`);
+      }
+      const user = await res.json();
+      navigate('/');
+      console.log('Registered', user);
+    } catch (err) {
+      alert(`Error registering user: ${err}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   return (
-    <div className='login template d-flex justify-content-center 100-w vh-60'>
+    <div className="login template d-flex justify-content-center 100-w vh-60">
       <div className="50-w p-5 rounded">
         <Form onSubmit={handleSubmit}>
           <h3 className="text-center">Register</h3>
           <FormGroup className="mb-2">
-            <FormControl
-              type="text"
-              placeholder="username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-            />
+            <label>
+              Username
+              <FormControl required name="username" type="text" />
+            </label>
           </FormGroup>
           <FormGroup className="mb-3">
-            <FormControl
-              type="password"
-              placeholder="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
+            <label>
+              Password
+              <FormControl required name="password" type="password" />
+            </label>
           </FormGroup>
-          <Button className="mb-3" variant="primary" type="submit">
+          <Button type="submit" disabled={isLoading}>
             Sign Up
           </Button>
           <p className="text-center">
-            Already a member? <a href="#" onClick={onToggle}>Sign In</a>
+            Not a member?{' '}
+            <a href="#" onClick={onToggle}>
+              Sign Up
+            </a>
           </p>
         </Form>
       </div>
     </div>
   );
-};
+}
 
-export default Register;
+export default RegistrationForm;

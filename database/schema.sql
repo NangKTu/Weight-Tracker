@@ -8,16 +8,16 @@ create schema "public";
 
 CREATE TABLE "users" (
   "userId" serial PRIMARY KEY,
-  "userName" varchar,
-  "password" varchar,
+  "userName" text not null,
+  "hashedPassword" text not null,
   "created_at" timestamptz(6) not null default now()
 );
 
 CREATE TABLE "weights" (
   "weightId" serial PRIMARY KEY,
-  "userId" integer,
+  "userId"   int not null,
   "weight" integer,
-  "created_at" varchar
+  "created_at" timestamptz(6) not null default now()
 );
 
 ALTER TABLE "weights" ADD FOREIGN KEY ("userId") REFERENCES "users" ("userId");

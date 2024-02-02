@@ -10,10 +10,8 @@
 --      ('Build projects', false),
 --      ('Get a job', false);
 
-insert into "users" ("userName", "password")
-values ('tester1', 'test123');
+insert into "users" ("userId", "userName", "hashedPassword")
+values (1, 'admin', '$argon2i$v=19$m=4096,t=3,p=1$h7icQD/xZr8akZsX+hNA0A$h68atJWyjvunAwNOpSpMfg9sPvoMQ6dKwoh0dJhurWA');
 
-insert into "weights" ("userId", "weight", "created_at")
-values (1, 160, '1/29/2024'),
-        (1, 160, '1/30/2024'),
-        (1, 159, '1/31/2024');
+insert into "weights" ("userId", "weight")
+values (1, 160);

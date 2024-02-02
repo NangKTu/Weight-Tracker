@@ -2,11 +2,29 @@
 import 'dotenv/config';
 import express from 'express';
 import pg from 'pg';
+import argon2 from 'argon2';
+import jwt from 'jsonwebtoken';
 import {
   ClientError,
   defaultMiddleware,
   errorMiddleware,
+  authMiddleware,
 } from './lib/index.js';
+
+type User = {
+  userId: number;
+  username: string;
+  hashedPassword: string;
+};
+type Auth = {
+  username: string;
+  password: string;
+};
+
+type Entry = {
+  weightId: number;
+  weight: number;
+};
 
 const connectionString =
   process.env.DATABASE_URL ||
@@ -17,6 +35,9 @@ const db = new pg.Pool({
     rejectUnauthorized: false,
   },
 });
+
+const hashKey = process.env.TOKEN_SECRET;
+if (!hashKey) throw new Error('TOKEN_SECRET not found in .env');
 
 const app = express();
 
@@ -33,14 +54,26 @@ app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello, World!' });
 });
 
-app.get('/api/user-weights/:userId', async (req, res, next) => {
-  const userId = req.params.userId;
-
+// api request to get which dates user checked in
+app.get('/api/user/checkins', authMiddleware, async (req, res, next) => {
   try {
-    const result = await db.query(
-      'SELECT "weight", "created_at" FROM "weights" WHERE "userId" = $1',
-      [userId]
-    );
+    const sql = `
+      SELECT "created_at" FROM "weights" WHERE "userId" = $1 ORDER BY "created_at" DESC;
+    `;
+    const result = await db.query<User>(sql, [req.user?.userId]);
+    res.status(201).json(result.rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// api request to get weights and dates as data for graph
+app.get('/api/user-weights', authMiddleware, async (req, res, next) => {
+  try {
+    const sql = `
+      SELECT "weight", "created_at" FROM "weights" WHERE "userId" = $1 ORDER BY "created_at" ASC;
+    `;
+    const result = await db.query(sql, [req.user?.userId]);
 
     const weightsData = result.rows.map((row) => ({
       weight: row.weight,
@@ -48,26 +81,81 @@ app.get('/api/user-weights/:userId', async (req, res, next) => {
     }));
 
     res.status(200).json(weightsData);
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 });
 
-app.post('/api/sign-in', async (req, res, next) => {
-  const { username, password } = req.body;
-
+// app async functionn use to input new weight number into databse
+app.post('/api/user-weight', authMiddleware, async (req, res, next) => {
   try {
-    const result = await db.query(
-      'SELECT * FROM users WHERE "userName" = $1 AND "password" = $2',
-      [username, password]
-    );
-    if (result.rows.length > 0) {
-      res.status(200).json({ success: true, message: 'Sign in successful' });
-    } else {
-      throw new ClientError(401, 'Invalid login');
+    const { weight } = req.body;
+    if (!weight) {
+      return res.status(400).json({ error: 'Weight is required.' });
     }
-  } catch (error) {
-    next(error);
+    const sql = `
+      INSERT INTO "weights" ("userId", "weight")
+      VALUES ($1, $2)
+      RETURNING *
+    `;
+    const params = [req.user?.userId, weight];
+    const result = await db.query(sql, params);
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// function use to make new user in database
+app.post('/api/auth/sign-up', async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      throw new ClientError(400, 'username and password are required fields');
+    }
+    const hashedPassword = await argon2.hash(password);
+    const sql = `
+      insert into "users" ("userName", "hashedPassword")
+      values ($1, $2)
+      returning *
+    `;
+    const params = [username, hashedPassword];
+    const result = await db.query<User>(sql, params);
+    const [user] = result.rows;
+    res.status(201).json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// authenticate and give user token when login
+app.post('/api/auth/sign-in', async (req, res, next) => {
+  try {
+    const { username, password } = req.body as Partial<Auth>;
+    if (!username || !password) {
+      throw new ClientError(401, 'invalid login');
+    }
+    const sql = `
+    select "userId",
+           "hashedPassword"
+      from "users"
+     where "userName" = $1
+  `;
+    const params = [username];
+    const result = await db.query<User>(sql, params);
+    const [user] = result.rows;
+    if (!user) {
+      throw new ClientError(401, 'invalid login');
+    }
+    const { userId, hashedPassword } = user;
+    if (!(await argon2.verify(hashedPassword, password))) {
+      throw new ClientError(401, 'invalid login');
+    }
+    const payload = { userId, username };
+    const token = jwt.sign(payload, hashKey);
+    res.json({ token, user: payload });
+  } catch (err) {
+    next(err);
   }
 });
 

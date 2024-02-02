@@ -1,6 +1,7 @@
 import Carousel from 'react-bootstrap/Carousel';
 import WeightModal from './WeightModal';
 import Calendar from './Calendar';
+import Graph from './Graph';
 
 function CarouselFade() {
   const carouselStyle = {
@@ -14,9 +15,8 @@ function CarouselFade() {
       <Carousel.Item>
         <Calendar />
       </Carousel.Item>
-      <Carousel.Item className="text-center">
-        <h1>Graphs</h1>
-        <p>Coming Soon</p>
+      <Carousel.Item>
+        <Graph />
       </Carousel.Item>
     </Carousel>
   );
