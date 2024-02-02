@@ -5,6 +5,8 @@ const Header2 = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    sessionStorage.removeItem('token');
+    console.log('token removed');
     navigate('/');
   };
   return (

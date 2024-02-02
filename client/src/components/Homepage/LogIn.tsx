@@ -1,42 +1,39 @@
-import { useState } from 'react';
-import { Button, Form, FormGroup, FormControl } from 'react-bootstrap';
+import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button, Form, FormGroup, FormControl } from 'react-bootstrap';
 
-const Login = ({ onToggle }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+type Props = {
+  onToggle: () => void;
+};
+function SignInForm({ onToggle }: Props) {
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (event) => {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     try {
-      const response = await fetch('/api/sign-in', {
+      setIsLoading(true);
+      const formData = new FormData(event.currentTarget);
+      const userData = Object.fromEntries(formData.entries());
+      const req = {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error);
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      };
+      const res = await fetch('/api/auth/sign-in', req);
+      if (!res.ok) {
+        throw new Error(`fetch Error ${res.status}`);
       }
-
-      const result = await response.json();
-
-      if (result.success) {
-        // Authentication successful - navigate to MemPage
-        navigate('/memPage');
-      } else {
-        // Authentication failed - handle accordingly
-        console.log('Sign in failed');
-      }
-    } catch (error) {
-      alert(`Error signing in: ${error}`);
+      const { user, token } = await res.json();
+      sessionStorage.setItem('token', token);
+      navigate('/memPage');
+      console.log('Signed In', user, '; received token.');
+    } catch (err) {
+      alert(`Error signing in: ${err}`);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }
 
   return (
     <div className="login template d-flex justify-content-center 100-w vh-60">
@@ -44,22 +41,18 @@ const Login = ({ onToggle }) => {
         <Form onSubmit={handleSubmit}>
           <h3 className="text-center">Sign In</h3>
           <FormGroup className="mb-2">
-            <FormControl
-              type="text"
-              placeholder="username"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-            />
+            <label>
+              Username
+              <FormControl required name="username" type="text" />
+            </label>
           </FormGroup>
           <FormGroup className="mb-3">
-            <FormControl
-              type="password"
-              placeholder="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
+            <label>
+              Password
+              <FormControl required name="password" type="password" />
+            </label>
           </FormGroup>
-          <Button className="mb-3" variant="primary" type="submit">
+          <Button type="submit" disabled={isLoading}>
             Sign In
           </Button>
           <p className="text-center">
@@ -72,6 +65,6 @@ const Login = ({ onToggle }) => {
       </div>
     </div>
   );
-};
+}
 
-export default Login;
+export default SignInForm;
