@@ -1,5 +1,5 @@
 import { Bar } from 'react-chartjs-2';
-import type { ChartOptions } from 'chart.js';
+// import type { ChartOptions, } from 'chart.js';
 
 interface WeightChartProps {
   data: { weight: number; created_at: string }[];
@@ -24,7 +24,7 @@ const WeightChart: React.FC<WeightChartProps> = ({ data }) => {
     ],
   };
 
-  const chartOptions: ChartOptions = {
+  const chartOptions: any = {
     scales: {
       x: {
         title: {
