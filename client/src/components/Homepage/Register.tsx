@@ -56,9 +56,9 @@ function RegistrationForm({ onToggle }: Props) {
             Sign Up
           </Button>
           <p className="text-center">
-            Not a member?{' '}
+            Already a member?{' '}
             <a href="#" onClick={onToggle}>
-              Sign Up
+              Sign In
             </a>
           </p>
         </Form>
