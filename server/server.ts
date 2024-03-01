@@ -163,10 +163,26 @@ app.post('/api/auth/sign-in', async (req, res, next) => {
 app.post('/api/auth/sign-in-guest', async (req, res, next) => {
   try {
     const guestUsername = 'guest';
-    const hashedPassword = '';
-    const payload = { userId: -1, username: guestUsername };
-    const token = jwt.sign(payload, hashKey); // Generate a token
-    res.json({ token, user: payload }); // Send the token and user information in the response
+    const guestPassword = 'dummy123'; // Predefined password for guest users
+    const sql = `
+      SELECT "userId", "hashedPassword"
+      FROM "users"
+      WHERE "userName" = $1
+    `;
+    const params = [guestUsername];
+    const result = await db.query<User>(sql, params);
+    const [user] = result.rows;
+    if (!user) {
+      throw new ClientError(401, 'Guest user not found');
+    }
+    // Verify the predefined password against the hashed password in the database
+    const { userId, hashedPassword } = user;
+    if (!(await argon2.verify(hashedPassword, guestPassword))) {
+      throw new ClientError(401, 'Invalid guest password');
+    }
+    const payload = { userId, username: guestUsername };
+    const token = jwt.sign(payload, hashKey);
+    res.json({ token, user: payload });
   } catch (err) {
     next(err);
   }
