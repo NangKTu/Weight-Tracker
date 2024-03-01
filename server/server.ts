@@ -159,6 +159,19 @@ app.post('/api/auth/sign-in', async (req, res, next) => {
   }
 });
 
+// api request for guest
+app.post('/api/auth/sign-in-guest', async (req, res, next) => {
+  try {
+    const guestUsername = 'guest';
+    const hashedPassword = '';
+    const payload = { userId: -1, username: guestUsername };
+    const token = jwt.sign(payload, hashKey); // Generate a token
+    res.json({ token, user: payload }); // Send the token and user information in the response
+  } catch (err) {
+    next(err);
+  }
+});
+
 /*
  * Middleware that handles paths that aren't handled by static middleware
  * or API route handlers.

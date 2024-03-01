@@ -35,6 +35,29 @@ function SignInForm({ onToggle }: Props) {
     }
   }
 
+  async function handleGuestSignIn(event: React.MouseEvent<HTMLButtonElement>) {
+    event.preventDefault(); // Prevent the default button click behavior
+    try {
+      setIsLoading(true);
+      const req = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      };
+      const res = await fetch('/api/auth/sign-in-guest', req);
+      if (!res.ok) {
+        throw new Error(`fetch Error ${res.status}`);
+      }
+      const { user, token } = await res.json();
+      sessionStorage.setItem('token', token);
+      navigate('/memPage');
+      console.log('Signed in as guest;', user, '; received token.');
+    } catch (err) {
+      alert(`Error signing in as guest: ${err}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return (
     <div className="login template d-flex justify-content-center 100-w vh-60">
       <div className="50-w p-5 rounded">
@@ -54,6 +77,10 @@ function SignInForm({ onToggle }: Props) {
           </FormGroup>
           <Button type="submit" disabled={isLoading}>
             Sign In
+          </Button>
+          <p className="text-center mb-2">OR</p>
+          <Button onClick={handleGuestSignIn} disabled={isLoading}>
+            Sign in as Guest
           </Button>
           <p className="text-center">
             Not a member?{' '}
